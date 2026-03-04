@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  habit-bot:
+    build: .
+    container_name: habit-bot
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      # These variables must be provided in an .env file or host environment
+      - TWITTER_API_KEY=${TWITTER_API_KEY}
+      - TWITTER_API_SECRET=${TWITTER_API_SECRET}
+      - TWITTER_ACCESS_TOKEN=${TWITTER_ACCESS_TOKEN}
+      - TWITTER_ACCESS_TOKEN_SECRET=${TWITTER_ACCESS_TOKEN_SECRET}
+      # DB Path override to use the mounted volume
+      - DB_PATH=data/habits.db
+    restart: unless-stopped
