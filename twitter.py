@@ -36,6 +36,7 @@ def post_failure_tweet(habit_name: str, failures: int, timestamp: str):
         except Exception as e:
             print(f"Error posting tweet: {e}")
             return False
+    else:
         try:
             print(f"[DRY RUN - No Twitter API Keys] Would tweet:\n{message}")
         except UnicodeEncodeError:
