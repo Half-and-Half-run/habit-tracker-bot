@@ -16,4 +16,6 @@ services:
       - TWITTER_ACCESS_TOKEN_SECRET=${TWITTER_ACCESS_TOKEN_SECRET}
       # DB Path override to use the mounted volume
       - DB_PATH=data/habits.db
+      # Timezone: set to Japan Standard Time so deadline checks (9:00, 23:00) work correctly
+      - TZ=Asia/Tokyo
     restart: unless-stopped
