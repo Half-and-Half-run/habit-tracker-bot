@@ -72,8 +72,8 @@ async def lifespan(app: FastAPI):
     # アプリ起動時にDBを初期化する（テーブルがなければ作成する）
     database.init_db()
     
-    # スケジューラに定期ジョブを登録する（60分ごとに締め切りチェックを実行）
-    scheduler.add_job(check_habits_job, 'interval', minutes=60)
+    # スケジューラに定期ジョブを登録する（5分ごとに締め切りチェックを実行）
+    scheduler.add_job(check_habits_job, 'interval', minutes=5)
     
     # サーバー起動直後（5秒後）にも一度チェックする
     # → オフライン中に締め切りを過ぎていた場合のキャッチアップ用
