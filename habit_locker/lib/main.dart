@@ -8,6 +8,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
 
+// ★バックエンドのURLをここに直接指定します（設定画面からの入力を不要にするため）
+// 実際のスマホから連携させる場合は、このURLをご自身のPCのIPアドレス（例: http://192.168.x.x:8000）やngrokのURLに変更してください。
+// エミュレータでテストする場合は http://10.0.2.2:8000 を使用します。
+const String BACKEND_URL = "http://10.0.2.2:8000";
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
@@ -44,16 +49,15 @@ Future<void> initializeService() async {
 void onStart(ServiceInstance service) async {
   Timer.periodic(const Duration(minutes: 1), (timer) async {
     final prefs = await SharedPreferences.getInstance();
-    final baseUrl = prefs.getString('api_url') ?? '';
     // APIのURLが設定されていなければ何もしない
-    if (baseUrl.isEmpty) return;
+    if (BACKEND_URL.isEmpty) return;
 
     final now = DateTime.now();
     final currentMinutes = now.hour * 60 + now.minute;
 
     // 起床(9:00 = 540分), 入浴(23:00 = 1380分)
     try {
-      final res = await http.get(Uri.parse('$baseUrl/status'));
+      final res = await http.get(Uri.parse('$BACKEND_URL/status'));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         final todayRecord = data['today_record'];
@@ -107,12 +111,11 @@ class _OverlayAppState extends State<OverlayApp> {
   Future<void> _checkIn() async {
     setState(() => isLoading = true);
     final prefs = await SharedPreferences.getInstance();
-    final baseUrl = prefs.getString('api_url') ?? '';
     final habit = prefs.getString('current_habit') ?? 'wake';
 
     try {
       final res = await http.post(
-        Uri.parse('$baseUrl/checkin'),
+        Uri.parse('$BACKEND_URL/checkin'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({"action": habit}),
       );
@@ -178,23 +181,22 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Habit Locker',
       theme: ThemeData(primarySwatch: Colors.indigo),
-      home: const SettingsScreen(),
+      home: const MonitoringScreen(),
     );
   }
 }
 
-class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+class MonitoringScreen extends StatefulWidget {
+  const MonitoringScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  State<MonitoringScreen> createState() => _MonitoringScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
-  final TextEditingController _urlController = TextEditingController();
-
+class _MonitoringScreenState extends State<MonitoringScreen> {
   @override
   void initState() {
     super.initState();
@@ -202,45 +204,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _initializeApp() async {
-    await _loadUrl();
     await _requestPermissions();
     await initializeService();
-  }
-
-  Future<void> _loadUrl() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _urlController.text = prefs.getString('api_url') ?? '';
-    });
-  }
-
-  Future<void> _saveUrl() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('api_url', _urlController.text);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("API URLを保存しました")),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('設定')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      appBar: AppBar(title: const Text('Habit Locker')),
+      body: Center(
         child: Column(
-          children: [
-            const Text("バックエンドサーバーのURLを入力してください（例: https://xxx.ngrok-free.app）"),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _urlController,
-              decoration: const InputDecoration(border: OutlineInputBorder(), labelText: "API URL"),
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.shield_rounded, size: 80, color: Colors.indigo),
+            SizedBox(height: 20),
+            Text(
+              "バックグラウンドで監視中です",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _saveUrl,
-              child: const Text("保存して監視を開始"),
-            ),
+            SizedBox(height: 10),
+            Text(
+              "URLの設定は不要です。\n帰宅後、時間になると勝手にロックされます。",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey),
+            )
           ],
         ),
       ),
