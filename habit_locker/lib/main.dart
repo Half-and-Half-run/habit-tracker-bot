@@ -49,37 +49,20 @@ void onStart(ServiceInstance service) async {
     // APIのURLが設定されていなければ何もしない
     if (BACKEND_URL.isEmpty) return;
 
-    final now = DateTime.now();
-    final currentMinutes = now.hour * 60 + now.minute;
-
-    // 起床(9:00 = 540分), 入浴(23:00 = 1380分)
+    // ★ テスト用: 常時ロック（APIチェックをスキップ）
     try {
-      final res = await http.get(Uri.parse('$BACKEND_URL/status'));
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        final todayRecord = data['today_record'];
-        
-        bool needsWakeCheckin = (currentMinutes >= 540) && (todayRecord['wake_time'] == null);
-        bool needsBathCheckin = (currentMinutes >= 1380) && (todayRecord['bath_time'] == null);
-
-        if (needsWakeCheckin || needsBathCheckin) {
-          bool isActive = await FlutterOverlayWindow.isActive();
-          if (!isActive) {
-            String targetAction = needsWakeCheckin ? "wake" : "bath";
-            prefs.setString('current_habit', targetAction);
-            
-            // システムオーバーレイとして全画面に強制表示！
-            await FlutterOverlayWindow.showOverlay(
-              enableDrag: false,
-              flag: OverlayFlag.focusPointer,
-              alignment: OverlayAlignment.center,
-              visibility: NotificationVisibility.visibilityPublic,
-              positionGravity: PositionGravity.auto,
-              height: WindowSize.fullCover,
-              width: WindowSize.fullCover,
-            );
-          }
-        }
+      bool isActive = await FlutterOverlayWindow.isActive();
+      if (!isActive) {
+        prefs.setString('current_habit', 'wake');
+        await FlutterOverlayWindow.showOverlay(
+          enableDrag: false,
+          flag: OverlayFlag.focusPointer,
+          alignment: OverlayAlignment.center,
+          visibility: NotificationVisibility.visibilityPublic,
+          positionGravity: PositionGravity.auto,
+          height: WindowSize.fullCover,
+          width: WindowSize.fullCover,
+        );
       }
     } catch (e) {
       debugPrint("エラー: $e");
