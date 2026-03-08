@@ -7,7 +7,7 @@ import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide NotificationVisibility;
 
 // ★バックエンドのURLをここに直接指定します（設定画面からの入力を不要にするため）
 // 実際のスマホから連携させる場合は、このURLをご自身のPCのIPアドレス（例: http://192.168.x.x:8000）やngrokのURLに変更してください。
