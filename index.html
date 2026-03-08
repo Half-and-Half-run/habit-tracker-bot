@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-glow: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            background-image: radial-gradient(circle at top right, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
+                              radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.1) 0%, transparent 40%);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .habit-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeInUp 0.8s ease-out backwards;
+        }
+
+        .habit-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .habit-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .card-deadline {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+        }
+
+        .status-display {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .status-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .status-value {
+            font-weight: 600;
+        }
+
+        .state-completed { color: var(--success); }
+        .state-pending { color: var(--warning); }
+        .state-failed { color: var(--danger); }
+
+        .checkin-btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .btn-wake {
+            background: linear-gradient(135deg, #f59e0b, #ea580c);
+            color: white;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-wake:hover {
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+            transform: scale(1.02);
+        }
+
+        .btn-bath {
+            background: linear-gradient(135deg, #3b82f6, #4f46e5);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-bath:hover {
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+            transform: scale(1.02);
+        }
+
+        .btn-disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            transform: translateY(150%);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+        }
+
+        .refresh-text {
+            text-align: center;
+            margin-top: 3rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Habit Tracker</h1>
+        <div class="status-badge">
+            <div class="status-dot"></div>
+            Bot is Active & Monitoring
+        </div>
+    </header>
+
+    <div class="dashboard-grid">
+        <!-- Wake Card -->
+        <div class="habit-card">
+            <div class="card-header">
+                <div class="card-title">🌅 起床 (Wake)</div>
+                <div class="card-deadline">Deadline: 09:00</div>
+            </div>
+            
+            <div class="status-display">
+                <div class="status-item">
+                    <span class="status-label">本日のステータス</span>
+                    <span class="status-value" id="wake-state">読み込み中...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">達成時刻</span>
+                    <span class="status-value" id="wake-time">--:--</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">連続失敗回数</span>
+                    <span class="status-value" id="wake-fails">0回</span>
+                </div>
+            </div>
+
+            <button id="wake-btn" class="checkin-btn btn-wake" onclick="checkin('wake')">
+                起きたよ！と記録する
+            </button>
+        </div>
+
+        <!-- Bath Card -->
+        <div class="habit-card">
+            <div class="card-header">
+                <div class="card-title">🛁 入浴 (Bath)</div>
+                <div class="card-deadline">Deadline: 23:00</div>
+            </div>
+            
+            <div class="status-display">
+                <div class="status-item">
+                    <span class="status-label">本日のステータス</span>
+                    <span class="status-value" id="bath-state">読み込み中...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">達成時刻</span>
+                    <span class="status-value" id="bath-time">--:--</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">連続失敗回数</span>
+                    <span class="status-value" id="bath-fails">0回</span>
+                </div>
+            </div>
+
+            <button id="bath-btn" class="checkin-btn btn-bath" onclick="checkin('bath')">
+                お風呂に入った！と記録する
+            </button>
+        </div>
+    </div>
+
+    <div class="refresh-text" id="last-refresh">Last updated: --:--:--</div>
+
+    <div class="notification" id="notification">
+        <span id="notif-icon">✅</span>
+        <span id="notif-text">記録しました！</span>
+    </div>
+
+    <script>
+        function formatTime(isoString) {
+            if (!isoString) return '--:--';
+            const date = new Date(isoString);
+            return date.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function updateUI(data) {
+            const today = data.today_record;
+            const stats = data.stats;
+
+            // Wake Update
+            const wakeStateEl = document.getElementById('wake-state');
+            const wakeBtn = document.getElementById('wake-btn');
+            if (today.wake_time) {
+                wakeStateEl.textContent = '完了!! 🎉';
+                wakeStateEl.className = 'status-value state-completed';
+                wakeBtn.textContent = '記録済み';
+                wakeBtn.className = 'checkin-btn btn-disabled';
+                wakeBtn.disabled = true;
+            } else {
+                wakeStateEl.textContent = '未完了';
+                wakeStateEl.className = 'status-value state-pending';
+                wakeBtn.textContent = '起きたよ！と記録する';
+                wakeBtn.className = 'checkin-btn btn-wake';
+                wakeBtn.disabled = false;
+            }
+            document.getElementById('wake-time').textContent = formatTime(today.wake_time);
+            document.getElementById('wake-fails').textContent = `${stats.wake_consecutive_failures}回`;
+
+            // Bath Update
+            const bathStateEl = document.getElementById('bath-state');
+            const bathBtn = document.getElementById('bath-btn');
+            if (today.bath_time) {
+                bathStateEl.textContent = '完了!! 🎉';
+                bathStateEl.className = 'status-value state-completed';
+                bathBtn.textContent = '記録済み';
+                bathBtn.className = 'checkin-btn btn-disabled';
+                bathBtn.disabled = true;
+            } else {
+                bathStateEl.textContent = '未完了';
+                bathStateEl.className = 'status-value state-pending';
+                bathBtn.textContent = 'お風呂に入った！と記録する';
+                bathBtn.className = 'checkin-btn btn-bath';
+                bathBtn.disabled = false;
+            }
+            document.getElementById('bath-time').textContent = formatTime(today.bath_time);
+            document.getElementById('bath-fails').textContent = `${stats.bath_consecutive_failures}回`;
+
+            document.getElementById('last-refresh').textContent = `Last updated: ${new Date().toLocaleTimeString('ja-JP')}`;
+        }
+
+        async function fetchStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                updateUI(data);
+            } catch (error) {
+                console.error('Error fetching status:', error);
+            }
+        }
+
+        function showNotification(message, isError = false) {
+            const notif = document.getElementById('notification');
+            document.getElementById('notif-icon').textContent = isError ? '❌' : '✅';
+            document.getElementById('notif-text').textContent = message;
+            
+            notif.classList.add('show');
+            setTimeout(() => {
+                notif.classList.remove('show');
+            }, 3000);
+        }
+
+        async function checkin(action) {
+            try {
+                const response = await fetch('/checkin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ action: action })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === "success") {
+                    showNotification(`${action === 'wake' ? '起床' : '入浴'}を記録しました！`);
+                } else {
+                    showNotification(result.message, true);
+                }
+                
+                // Refresh status immediately
+                fetchStatus();
+                
+            } catch (error) {
+                console.error('Checkin error:', error);
+                showNotification('記録に失敗しました', true);
+            }
+        }
+
+        // Initial fetch
+        fetchStatus();
+
+        // Refresh every 30 seconds
+        setInterval(fetchStatus, 30000);
+    </script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime, date
@@ -75,6 +76,11 @@ async def lifespan(app: FastAPI):
     print("Background scheduler stopped.")
 
 app = FastAPI(lifespan=lifespan, title="Habit Tracker Webhook Bot")
+
+@app.get("/", response_class=HTMLResponse)
+def read_root():
+    with open("index.html", "r", encoding="utf-8") as f:
+        return f.read()
 
 @app.post("/checkin")
 def checkin(payload: CheckinPayload):
