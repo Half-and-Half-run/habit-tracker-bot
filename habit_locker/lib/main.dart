@@ -7,7 +7,6 @@ import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide NotificationVisibility;
 
 // ★バックエンドのURLをここに直接指定します（設定画面からの入力を不要にするため）
 // 実際のスマホから連携させる場合は、このURLをご自身のPCのIPアドレス（例: http://192.168.x.x:8000）やngrokのURLに変更してください。
@@ -30,29 +29,11 @@ Future<void> _requestPermissions() async {
 Future<void> initializeService() async {
   final service = FlutterBackgroundService();
 
-  const AndroidNotificationChannel channel = AndroidNotificationChannel(
-    'habit_locker_channel', // AndroidManifestのサービスと一致させるID
-    'Habit Locker Service', // タイトル
-    description: 'This channel is used for background locker monitoring.',
-    importance: Importance.high, 
-  );
-
-  final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-
-  // Android用の通知チャネルを作成
-  await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-      ?.createNotificationChannel(channel);
-
   await service.configure(
     androidConfiguration: AndroidConfiguration(
       onStart: onStart,
       autoStart: true,
       isForegroundMode: true,
-      notificationChannelId: 'habit_locker_channel',
-      initialNotificationTitle: 'Habit Locker Active',
-      initialNotificationContent: 'Monitoring deadlines...',
-      foregroundServiceNotificationId: 888,
     ),
     iosConfiguration: IosConfiguration(
       autoStart: false,
