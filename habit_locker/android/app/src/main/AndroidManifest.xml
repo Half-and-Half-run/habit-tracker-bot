@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="habit_locker"
-        android:name="${applicationName}"
+        android:name=".MainApplication"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
@@ -43,6 +43,18 @@
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                       android:value="Monitor habit deadlines" />
         </service>
+
+        <!-- For flutter_overlay_window -->
+        <service
+            android:name="flutter.overlay.window.flutter_overlay_window.OverlayService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" >
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                      android:value="Overlay for habit tracking lockdown" />
+        </service>
+        <meta-data
+            android:name="flutter.overlay.window.OVERLAY_ENTRY_POINT"
+            android:value="overlayMain" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -8,9 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
 
-// ★バックエンドのURLをここに直接指定します（設定画面からの入力を不要にするため）
-// 実際のスマホから連携させる場合は、このURLをご自身のPCのIPアドレス（例: http://192.168.x.x:8000）やngrokのURLに変更してください。
-// エミュレータでテストする場合は http://10.0.2.2:8000 を使用します。
 const String BACKEND_URL = "http://10.0.2.2:8000";
 
 void main() async {
@@ -18,85 +15,31 @@ void main() async {
   runApp(const MyApp());
 }
 
-Future<void> _requestPermissions() async {
-  await Permission.notification.request();
-  bool isOverlayGranted = await FlutterOverlayWindow.isPermissionGranted();
-  if (!isOverlayGranted) {
-    await FlutterOverlayWindow.requestPermission();
-  }
-}
-
-Future<void> initializeService() async {
-  final service = FlutterBackgroundService();
-
-  await service.configure(
-    androidConfiguration: AndroidConfiguration(
-      onStart: onStart,
-      autoStart: true,
-      isForegroundMode: true,
-    ),
-    iosConfiguration: IosConfiguration(
-      autoStart: false,
-      onForeground: onStart,
-    ),
-  );
-}
-
+// --- バックグラウンドサービス（別Isolate、シグナルのみ送信）---
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
-  Timer.periodic(const Duration(minutes: 1), (timer) async {
-    final prefs = await SharedPreferences.getInstance();
-    // APIのURLが設定されていなければ何もしない
-    if (BACKEND_URL.isEmpty) return;
-
-    final now = DateTime.now();
-    final currentMinutes = now.hour * 60 + now.minute;
-
-    // 起床(9:00 = 540分), 入浴(23:00 = 1380分)
-    try {
-      final res = await http.get(Uri.parse('$BACKEND_URL/status'));
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        final todayRecord = data['today_record'];
-        
-        bool needsWakeCheckin = (currentMinutes >= 540) && (todayRecord['wake_time'] == null);
-        bool needsBathCheckin = (currentMinutes >= 1380) && (todayRecord['bath_time'] == null);
-
-        if (needsWakeCheckin || needsBathCheckin) {
-          bool isActive = await FlutterOverlayWindow.isActive();
-          if (!isActive) {
-            String targetAction = needsWakeCheckin ? "wake" : "bath";
-            prefs.setString('current_habit', targetAction);
-            
-            // システムオーバーレイとして全画面に強制表示！
-            await FlutterOverlayWindow.showOverlay(
-              enableDrag: false,
-              flag: OverlayFlag.focusPointer,
-              alignment: OverlayAlignment.center,
-              visibility: NotificationVisibility.visibilityPublic,
-              positionGravity: PositionGravity.auto,
-              height: WindowSize.fullCover,
-              width: WindowSize.fullCover,
-            );
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint("エラー: $e");
-    }
+  debugPrint("[BGService] 起動しました");
+  Timer.periodic(const Duration(minutes: 1), (timer) {
+    debugPrint("[BGService] タイマー発火 → showLock を送信");
+    service.invoke('showLock', {'habit': 'wake'});
   });
 }
 
-// --- システムオーバーレイ（強制ロック画面）のエントリーポイント ---
+// --- オーバーレイ画面（SYSTEM_ALERT_WINDOW で全面表示）---
 @pragma("vm:entry-point")
 void overlayMain() {
+  debugPrint("[Overlay] overlayMain 呼び出し開始");
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const OverlayApp());
+  debugPrint("[Overlay] WidgetsFlutterBinding 初期化完了");
+  runApp(const MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: OverlayApp(),
+  ));
+  debugPrint("[Overlay] runApp 完了");
 }
 
 class OverlayApp extends StatefulWidget {
   const OverlayApp({super.key});
-
   @override
   State<OverlayApp> createState() => _OverlayAppState();
 }
@@ -109,7 +52,6 @@ class _OverlayAppState extends State<OverlayApp> {
     setState(() => isLoading = true);
     final prefs = await SharedPreferences.getInstance();
     final habit = prefs.getString('current_habit') ?? 'wake';
-
     try {
       final res = await http.post(
         Uri.parse('$BACKEND_URL/checkin'),
@@ -117,7 +59,6 @@ class _OverlayAppState extends State<OverlayApp> {
         body: jsonEncode({"action": habit}),
       );
       if (res.statusCode == 200) {
-        // チェックイン成功！オーバーレイを閉じて解放する
         await FlutterOverlayWindow.closeOverlay();
       } else {
         setState(() => errorMsg = "エラー: ${res.statusCode}");
@@ -134,7 +75,7 @@ class _OverlayAppState extends State<OverlayApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        backgroundColor: Colors.red[900], // 警告の赤色
+        backgroundColor: Colors.red[900],
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -150,7 +91,7 @@ class _OverlayAppState extends State<OverlayApp> {
               if (errorMsg.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 20),
-                  child: Text(errorMsg, style: const TextStyle(color: Colors.yellow, fontSize: 16)),
+                  child: Text(errorMsg, style: const TextStyle(color: Colors.yellow)),
                 ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -161,8 +102,9 @@ class _OverlayAppState extends State<OverlayApp> {
                 onPressed: isLoading ? null : _checkIn,
                 child: isLoading
                     ? const CircularProgressIndicator()
-                    : const Text("今すぐチェックインして解放する", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              )
+                    : const Text("今すぐチェックインして解放する",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
             ],
           ),
         ),
@@ -171,10 +113,9 @@ class _OverlayAppState extends State<OverlayApp> {
   }
 }
 
-// --- 通常のアプリ画面（初期設定用） ---
+// --- メインアプリ ---
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -188,21 +129,79 @@ class MyApp extends StatelessWidget {
 
 class MonitoringScreen extends StatefulWidget {
   const MonitoringScreen({super.key});
-
   @override
   State<MonitoringScreen> createState() => _MonitoringScreenState();
 }
 
 class _MonitoringScreenState extends State<MonitoringScreen> {
+  StreamSubscription? _lockSub;
+  String _statusMsg = "初期化中...";
+
   @override
   void initState() {
     super.initState();
-    _initializeApp();
+    _initApp();
   }
 
-  Future<void> _initializeApp() async {
-    await _requestPermissions();
-    await initializeService();
+  Future<void> _initApp() async {
+    // パーミッション要求
+    await Permission.notification.request();
+    bool overlayGranted = await FlutterOverlayWindow.isPermissionGranted();
+    if (!overlayGranted) {
+      await FlutterOverlayWindow.requestPermission();
+    }
+    setState(() => _statusMsg = "パーミッション確認済");
+
+    // バックグラウンドサービス設定&起動
+    final service = FlutterBackgroundService();
+    await service.configure(
+      androidConfiguration: AndroidConfiguration(
+        onStart: onStart,
+        autoStart: true,
+        isForegroundMode: true,
+      ),
+      iosConfiguration: IosConfiguration(autoStart: false, onForeground: onStart),
+    );
+
+    final isRunning = await service.isRunning();
+    if (!isRunning) {
+      await service.startService();
+      debugPrint("[MainUI] バックグラウンドサービスを起動しました");
+    } else {
+      debugPrint("[MainUI] バックグラウンドサービスは既に起動中");
+    }
+    setState(() => _statusMsg = "バックグラウンドで監視中です");
+
+    // バックグラウンドサービスからの showLock イベントをリッスン
+    _lockSub = service.on('showLock').listen((event) async {
+      debugPrint("[MainUI] showLock 受信: $event → オーバーレイ表示");
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('current_habit', event?['habit'] ?? 'wake');
+      await _showLockOverlay();
+    });
+  }
+
+  Future<void> _showLockOverlay() async {
+    bool isActive = await FlutterOverlayWindow.isActive();
+    if (!isActive) {
+      debugPrint("[MainUI] FlutterOverlayWindow.showOverlay() を呼び出し中...");
+      await FlutterOverlayWindow.showOverlay(
+        enableDrag: false,
+        flag: OverlayFlag.focusPointer,
+        alignment: OverlayAlignment.center,
+        visibility: NotificationVisibility.visibilityPublic,
+        positionGravity: PositionGravity.auto,
+        height: WindowSize.fullCover,
+        width: WindowSize.fullCover,
+      );
+      debugPrint("[MainUI] showOverlay 完了");
+    }
+  }
+
+  @override
+  void dispose() {
+    _lockSub?.cancel();
+    super.dispose();
   }
 
   @override
@@ -212,19 +211,26 @@ class _MonitoringScreenState extends State<MonitoringScreen> {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(Icons.shield_rounded, size: 80, color: Colors.indigo),
-            SizedBox(height: 20),
+          children: [
+            const Icon(Icons.shield_rounded, size: 80, color: Colors.indigo),
+            const SizedBox(height: 20),
             Text(
-              "バックグラウンドで監視中です",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              _statusMsg,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 10),
-            Text(
-              "URLの設定は不要です。\n帰宅後、時間になると勝手にロックされます。",
+            const SizedBox(height: 10),
+            const Text(
+              "時間になると自動でロックされます。",
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey),
-            )
+            ),
+            const SizedBox(height: 30),
+            // デバッグ用：今すぐロックボタン
+            ElevatedButton.icon(
+              icon: const Icon(Icons.lock),
+              label: const Text("今すぐロック（テスト）"),
+              onPressed: _showLockOverlay,
+            ),
           ],
         ),
       ),
