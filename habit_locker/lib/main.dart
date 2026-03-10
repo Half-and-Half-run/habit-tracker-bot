@@ -28,8 +28,14 @@ void onStart(ServiceInstance service) async {
 // --- オーバーレイ画面（SYSTEM_ALERT_WINDOW で全面表示）---
 @pragma("vm:entry-point")
 void overlayMain() {
+  debugPrint("[Overlay] overlayMain 呼び出し開始");
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const OverlayApp());
+  debugPrint("[Overlay] WidgetsFlutterBinding 初期化完了");
+  runApp(const MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: OverlayApp(),
+  ));
+  debugPrint("[Overlay] runApp 完了");
 }
 
 class OverlayApp extends StatefulWidget {
