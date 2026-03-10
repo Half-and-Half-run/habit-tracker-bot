@@ -28,14 +28,18 @@ void onStart(ServiceInstance service) async {
 // --- オーバーレイ画面（SYSTEM_ALERT_WINDOW で全面表示）---
 @pragma("vm:entry-point")
 void overlayMain() {
-  debugPrint("[Overlay] overlayMain 呼び出し開始");
-  WidgetsFlutterBinding.ensureInitialized();
-  debugPrint("[Overlay] WidgetsFlutterBinding 初期化完了");
-  runApp(const MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: OverlayApp(),
-  ));
-  debugPrint("[Overlay] runApp 完了");
+  runZonedGuarded(() {
+    debugPrint("[Overlay] overlayMain 呼び出し開始");
+    WidgetsFlutterBinding.ensureInitialized();
+    debugPrint("[Overlay] WidgetsFlutterBinding 初期化完了");
+    runApp(const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: OverlayApp(),
+    ));
+    debugPrint("[Overlay] runApp 完了");
+  }, (error, stack) {
+    debugPrint("[Overlay] CRITICAL ERROR: $error\n$stack");
+  });
 }
 
 class OverlayApp extends StatefulWidget {
@@ -53,8 +57,7 @@ class _OverlayAppState extends State<OverlayApp> {
     final prefs = await SharedPreferences.getInstance();
     final habit = prefs.getString('current_habit') ?? 'wake';
     try {
-      final res = await http.post(
-        Uri.parse('$BACKEND_URL/checkin'),
+      final res = await http.post(Uri.parse('$BACKEND_URL/checkin'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({"action": habit}),
       );
@@ -72,41 +75,24 @@ class _OverlayAppState extends State<OverlayApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        backgroundColor: Colors.red[900],
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.warning_amber_rounded, size: 100, color: Colors.white),
-              const SizedBox(height: 20),
-              const Text(
-                "🚨 締め切りオーバー 🚨\nチェックインするまでスマホを使えません",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 40),
-              if (errorMsg.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: Text(errorMsg, style: const TextStyle(color: Colors.yellow)),
-                ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.red[900],
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                ),
-                onPressed: isLoading ? null : _checkIn,
-                child: isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text("今すぐチェックインして解放する",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
+    return Material(
+      color: Colors.red[900],
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.warning_amber_rounded, size: 80, color: Colors.white),
+            const SizedBox(height: 10),
+            const Text(
+              "🚨 締め切りオーバー 🚨",
+              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: isLoading ? null : _checkIn,
+              child: isLoading ? const CircularProgressIndicator() : const Text("チェックイン"),
+            ),
+          ],
         ),
       ),
     );
