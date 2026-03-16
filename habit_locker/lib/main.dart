@@ -19,7 +19,7 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterL
 const List<Map<String, dynamic>> LOCK_WINDOWS = [
   {'session': 'morning', 'habit': 'wake', 'start': 6, 'end': 10,  'label': '⏰ 起床タイム'},
   {'session': 'evening', 'habit': 'bath', 'start': 18, 'end': 24, 'label': '🏠 帰宅タイム'},
-  {'session': 'test_notif', 'habit': 'bath', 'start': 4, 'end': 6, 'label': '🧪 通知テスト'},
+  {'session': 'test_notif', 'habit': 'bath', 'start': 19, 'end': 21, 'label': '🧪 通知テスト'},
 ];
 
 void main() async {
@@ -35,7 +35,7 @@ void onStart(ServiceInstance service) async {
   // 通知の初期化
   const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
   const InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings: initializationSettings);
+  await flutterLocalNotificationsPlugin.initialize(settings: initializationSettings);
 
   Timer.periodic(const Duration(minutes: 1), (timer) async {
     final now = DateTime.now();
