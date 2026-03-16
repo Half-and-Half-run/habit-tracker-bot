@@ -75,18 +75,32 @@ def post_success_tweet(habit_id: str, timestamp: str):
 
 def _send_tweet(client, message):
     """共通のツイート送信処理"""
-    if client:
+    def _safe_print(msg):
         try:
-            response = client.create_tweet(text=message)
-            print(f"ツイートに成功しました: {response}")
-            return True
-        except Exception as e:
-            print(f"ツイートに失敗しました: {e}")
-            return False
-    else:
-        try:
-            print(f"[ドライラン] ツイート予定内容:\n{message}")
+            print(msg)
         except UnicodeEncodeError:
             # Windowsのコマンドプロンプト等で絵文字が表示できない場合のフォールバック
-            print(f"[ドライラン] ツイート予定内容:\n{message.encode('cp932', errors='replace').decode('cp932')}")
+            try:
+                print(msg.encode('cp932', errors='replace').decode('cp932'))
+            except:
+                print("[Encoding Error] Could not print message even with replacement.")
+
+    # クライアントが存在し、かつ各種キーが設定されているか確認する（簡易的なドライラン判定）
+    is_dry_run = True
+    if client:
+        # tweepy.Clientオブジェクトの場合、各種キーが None でないかチェック
+        if client.consumer_key and client.consumer_secret and client.access_token and client.access_token_secret:
+            is_dry_run = False
+
+    if not is_dry_run:
+        try:
+            # 実際のツイート送信。ここでもUnicodeエラーが出る可能性を考慮してキャッチする
+            response = client.create_tweet(text=message)
+            _safe_print(f"ツイートに成功しました: {response}")
+            return True
+        except Exception as e:
+            _safe_print(f"ツイートに失敗しました: {e}")
+            return False
+    else:
+        _safe_print(f"[ドライラン] ツイート予定内容:\n{message}")
         return True
