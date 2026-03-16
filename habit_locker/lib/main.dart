@@ -19,7 +19,6 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterL
 const List<Map<String, dynamic>> LOCK_WINDOWS = [
   {'session': 'morning', 'habit': 'wake', 'start': 6, 'end': 10,  'label': '⏰ 起床タイム'},
   {'session': 'evening', 'habit': 'bath', 'start': 18, 'end': 24, 'label': '🏠 帰宅タイム'},
-  {'session': 'test_notif', 'habit': 'bath', 'start': 19, 'end': 21, 'label': '🧪 通知テスト'},
 ];
 
 void main() async {
@@ -60,30 +59,32 @@ void onStart(ServiceInstance service) async {
         });
       }
 
-      // --- 通知ロジック (入浴忘れ防止) ---
-      if (!alreadyDone && window['session'] == 'evening') {
-        // 例: 21:00, 22:00, 23:00 にリマインド
-        if (minute == 0 && (hour == 21 || hour == 22 || hour == 23)) {
-          _sendNotification(
-            "お風呂のリマインド",
-            "締め切りが近づいています！${window['end']}:00までにチェックインしてください。",
-          );
+      // --- 通知ロジック (入浴・起床忘れ防止) ---
+      if (!alreadyDone) {
+        if (window['session'] == 'evening') {
+          // 21:00, 22:00, 23:00 にリマインド
+          if (minute == 0 && (hour == 21 || hour == 22 || hour == 23)) {
+            _sendNotification(
+              "お風呂のリマインド",
+              "締め切りが近づいています！${window['end']}:00までにチェックインしてください。",
+            );
+          }
+          // 締め切り直前 (23:30)
+          if (hour == 23 && minute == 30) {
+            _sendNotification(
+              "🚨 最終警告",
+              "あと30分で入浴締め切りです。急いでください！",
+            );
+          }
+        } else if (window['session'] == 'morning') {
+          // 9:00 にリマインド
+          if (minute == 0 && hour == 9) {
+            _sendNotification(
+              "起床のリマインド",
+              "10:00までにチェックインを完了させてください！",
+            );
+          }
         }
-        // 締め切り直前 (23:30)
-        if (hour == 23 && minute == 30) {
-          _sendNotification(
-            "🚨 最終警告",
-            "あと30分で入浴締め切りです。急いでください！",
-          );
-        }
-      }
-
-      // --- テスト用通知 (毎分実行) ---
-      if (!alreadyDone && window['session'] == 'test_notif') {
-        _sendNotification(
-          "🧪 通知テスト中",
-          "自動通知機能の動作確認です (${now.hour}:${now.minute})",
-        );
       }
     }
   });
