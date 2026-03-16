@@ -90,20 +90,26 @@ void onStart(ServiceInstance service) async {
 }
 
 Future<void> _sendNotification(String title, String body) async {
-  const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
-    'habit_reminders',
-    'Habit Reminders',
-    importance: Importance.max,
-    priority: Priority.high,
-    showWhen: true,
-  );
-  const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
-  await flutterLocalNotificationsPlugin.show(
-    id: 0,
-    title: title,
-    body: body,
-    notificationDetails: platformChannelSpecifics,
-  );
+  debugPrint("[BGService] 通知送信開始: $title");
+  try {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'habit_reminders',
+      'Habit Reminders',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: true,
+    );
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.show(
+      id: 0,
+      title: title,
+      body: body,
+      notificationDetails: platformChannelSpecifics,
+    );
+    debugPrint("[BGService] 通知送信完了");
+  } catch (e) {
+    debugPrint("[BGService] 通知エラー: $e");
+  }
 }
 
 // --- オーバーレイ画面（SYSTEM_ALERT_WINDOW で全面表示）---
