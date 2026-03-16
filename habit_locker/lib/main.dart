@@ -7,15 +7,19 @@ import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 const String BACKEND_URL = "http://10.0.2.2:8000";
 
+// --- 通知プラグインのインスタンス ---
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
 // --- ロックウィンドウの定義 ---
 // 各エントリ: {'session': セッションID, 'habit': 習慣名, 'start': 開始時刻(時), 'end': 終了時刻(時)}
-// セッションIDは「日付_セッション名」で一意に管理（例: "2024-03-10_morning"）
 const List<Map<String, dynamic>> LOCK_WINDOWS = [
-  {'session': 'morning', 'habit': 'bath', 'start': 6, 'end': 10,  'label': '⏰ 起床タイム'},
+  {'session': 'morning', 'habit': 'wake', 'start': 6, 'end': 10,  'label': '⏰ 起床タイム'},
   {'session': 'evening', 'habit': 'bath', 'start': 18, 'end': 24, 'label': '🏠 帰宅タイム'},
+  {'session': 'test_notif', 'habit': 'bath', 'start': 4, 'end': 6, 'label': '🧪 通知テスト'},
 ];
 
 void main() async {
@@ -28,32 +32,78 @@ void main() async {
 void onStart(ServiceInstance service) async {
   debugPrint("[BGService] 起動しました");
 
+  // 通知の初期化
+  const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
   Timer.periodic(const Duration(minutes: 1), (timer) async {
     final now = DateTime.now();
     final prefs = await SharedPreferences.getInstance();
     final todayStr = "${now.year}-${now.month.toString().padLeft(2,'0')}-${now.day.toString().padLeft(2,'0')}";
+    final hour = now.hour;
+    final minute = now.minute;
 
     for (final window in LOCK_WINDOWS) {
       final sessionKey = "${todayStr}_${window['session']}";
       final alreadyDone = prefs.getBool(sessionKey) ?? false;
 
-      final hour = now.hour;
       final inWindow = hour >= (window['start'] as int) && hour < (window['end'] as int);
 
-      debugPrint("[BGService] セッション=${window['session']} 時刻=$hour "
-          "ウィンドウ内=$inWindow 完了済=$alreadyDone");
-
+      // --- ロック発動ロジック ---
       if (inWindow && !alreadyDone) {
-        debugPrint("[BGService] 🔒 ロック発動: ${window['label']}");
+        debugPrint("[BGService] 🔒 ロック判定: ${window['label']}");
         service.invoke('showLock', {
           'habit': window['habit'],
           'label': window['label'],
           'sessionKey': sessionKey,
         });
-        break; // 一度に1セッションだけロック
+      }
+
+      // --- 通知ロジック (入浴忘れ防止) ---
+      if (!alreadyDone && window['session'] == 'evening') {
+        // 例: 21:00, 22:00, 23:00 にリマインド
+        if (minute == 0 && (hour == 21 || hour == 22 || hour == 23)) {
+          _sendNotification(
+            "お風呂のリマインド",
+            "締め切りが近づいています！${window['end']}:00までにチェックインしてください。",
+          );
+        }
+        // 締め切り直前 (23:30)
+        if (hour == 23 && minute == 30) {
+          _sendNotification(
+            "🚨 最終警告",
+            "あと30分で入浴締め切りです。急いでください！",
+          );
+        }
+      }
+
+      // --- テスト用通知 (毎分実行) ---
+      if (!alreadyDone && window['session'] == 'test_notif') {
+        _sendNotification(
+          "🧪 通知テスト中",
+          "自動通知機能の動作確認です (${now.hour}:${now.minute})",
+        );
       }
     }
   });
+}
+
+Future<void> _sendNotification(String title, String body) async {
+  const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
+    'habit_reminders',
+    'Habit Reminders',
+    importance: Importance.max,
+    priority: Priority.high,
+    showWhen: true,
+  );
+  const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
+  await flutterLocalNotificationsPlugin.show(
+    0,
+    title,
+    body,
+    platformChannelSpecifics,
+  );
 }
 
 // --- オーバーレイ画面（SYSTEM_ALERT_WINDOW で全面表示）---
