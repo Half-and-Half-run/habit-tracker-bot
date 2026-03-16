@@ -25,82 +25,52 @@ def get_client():
     )
 
 def post_failure_tweet(habit_id: str, failures: int, timestamp: str):
-    """習慣の失敗をTwitterにツイートする。
-    
-    Args:
-        habit_id: 習慣ID ("wake" または "bath")
-        failures: 現在の連続失敗回数
-        timestamp: 判定日時の文字列
-    
-    Returns:
-        True: ツイート成功
-    """
+    """習慣の失敗をTwitterにツイートする。"""
     client = get_client()
 
-    # ユーザー指定の臨場感のあるメッセージ
     if habit_id == "wake":
-        habit_display = "起床(朝9時)"
-        status_msg = "🚨 🚨 🚨 二度寝してます！"
+        habit_display = "Kishou(9AM)"
+        status_msg = "!!! Nido-ne Shitemasu !!!" # 二度寝してます
     else:
-        habit_id = "bath"
-        habit_display = "入浴(夜23時)"
-        status_msg = "🚨 🚨 🚨 まだお風呂入ってないです！"
+        habit_display = "Nyuuyoku(11PM)"
+        status_msg = "!!! Ofuro Haitte naidesu !!!" # お風呂入ってないです
     
-    # ツイート本文を組み立てる
-    message = f"{status_msg}\n\n【報告】{habit_display}の目標を達成できませんでした。\n\n"
+    message = f"{status_msg}\n\n[Report] {habit_display} mission failed.\n"
     if failures > 1:
-        message += f"現在の連続失敗回数: {failures}回 😱\n\n"
+        message += f"Consecutive failures: {failures}\n"
         
-    message += f"判定日時: {timestamp}"
+    message += f"Time: {timestamp}"
     
     return _send_tweet(client, message)
 
 def post_success_tweet(habit_id: str, timestamp: str):
-    """習慣の達成をTwitterでお祝いツイートする。
-    
-    Args:
-        habit_id: 習慣ID ("wake" または "bath")
-        timestamp: 達成日時の文字列
-    """
+    """習慣の達成をTwitterでお祝いツイートする。"""
     client = get_client()
 
     if habit_id == "wake":
-        status_msg = "🌞 おはようございます！起床目標を達成しました！"
+        status_msg = "Good Morning! Wake up mission accomplished!"
     else:
-        status_msg = "🛁 お風呂に入りました！今夜のミッション完了です！"
+        status_msg = "Bath mission accomplished!"
     
-    message = f"{status_msg}\n\n今日も一歩前進です！✨\n達成日時: {timestamp}"
+    message = f"{status_msg}\n\nGreat job!\nTime: {timestamp}"
     
     return _send_tweet(client, message)
 
 def _send_tweet(client, message):
-    """共通のツイート送信処理"""
-    def _safe_print(msg):
-        try:
-            print(msg)
-        except UnicodeEncodeError:
-            # Windowsのコマンドプロンプト等で絵文字が表示できない場合のフォールバック
-            try:
-                print(msg.encode('cp932', errors='replace').decode('cp932'))
-            except:
-                print("[Encoding Error] Could not print message even with replacement.")
-
-    # クライアントが存在し、かつ各種キーが設定されているか確認する（簡易的なドライラン判定）
+    """Common tweet sending logic."""
+    # Simplified dry-run check
     is_dry_run = True
-    if client:
-        # tweepy.Clientオブジェクトの場合、各種キーが None でないかチェック
-        if client.consumer_key and client.consumer_secret and client.access_token and client.access_token_secret:
-            is_dry_run = False
+    if client and hasattr(client, 'consumer_key') and client.consumer_key:
+        is_dry_run = False
 
     if not is_dry_run:
         try:
-            # 実際のツイート送信。ここでもUnicodeエラーが出る可能性を考慮してキャッチする
             response = client.create_tweet(text=message)
-            _safe_print(f"ツイートに成功しました: {response}")
+            print(f"Tweet success: {response}")
             return True
         except Exception as e:
-            _safe_print(f"ツイートに失敗しました: {e}")
+            print(f"Tweet failed: {e}")
             return False
     else:
-        _safe_print(f"[ドライラン] ツイート予定内容:\n{message}")
+        print(f"[Dry Run] Message:\n{message}")
         return True
