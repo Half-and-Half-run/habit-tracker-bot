@@ -49,7 +49,8 @@ def check_habits_job():
             # 連続失敗カウントを+1してツイートする
             database.update_consecutive_failures("wake", failed=True)
             stats = database.get_stats()
-            success = twitter.post_failure_tweet("起床(朝9時)", stats["wake_consecutive_failures"], now.strftime("%Y-%m-%d %H:%M:%S"))
+            # "wake" IDを渡して expressive なメッセージをトリガーする
+            success = twitter.post_failure_tweet("wake", stats["wake_consecutive_failures"], now.strftime("%Y-%m-%d %H:%M:%S"))
             if success:
                 # ツイート済みフラグを立てて二重投稿を防ぐ
                 database.mark_tweeted("wake", today_str)
@@ -61,7 +62,8 @@ def check_habits_job():
             # 連続失敗カウントを+1してツイートする
             database.update_consecutive_failures("bath", failed=True)
             stats = database.get_stats()
-            success = twitter.post_failure_tweet("入浴(夜23時)", stats["bath_consecutive_failures"], now.strftime("%Y-%m-%d %H:%M:%S"))
+            # "bath" IDを渡して expressive なメッセージをトリガーする
+            success = twitter.post_failure_tweet("bath", stats["bath_consecutive_failures"], now.strftime("%Y-%m-%d %H:%M:%S"))
             if success:
                 # ツイート済みフラグを立てて二重投稿を防ぐ
                 database.mark_tweeted("bath", today_str)
@@ -112,6 +114,8 @@ def checkin(payload: CheckinPayload):
     if updated:
         # 初回の記録成功 → 連続失敗カウントを0にリセットする
         database.update_consecutive_failures(payload.action, failed=False)
+        # 達成をお祝いツイートする
+        twitter.post_success_tweet(payload.action, timestamp)
         return {"status": "success", "message": f"{payload.action} recorded successfully at {timestamp}."}
     else:
         # 今日はすでに記録済み → 何もしない
