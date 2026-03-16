@@ -84,5 +84,9 @@ def _send_tweet(client, message):
             print(f"ツイートに失敗しました: {e}")
             return False
     else:
-        print(f"[ドライラン] ツイート予定内容:\n{message}")
+        try:
+            print(f"[ドライラン] ツイート予定内容:\n{message}")
+        except UnicodeEncodeError:
+            # Windowsのコマンドプロンプト等で絵文字が表示できない場合のフォールバック
+            print(f"[ドライラン] ツイート予定内容:\n{message.encode('cp932', errors='replace').decode('cp932')}")
         return True
