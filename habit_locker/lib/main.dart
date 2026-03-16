@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
-import 'package:flutter_overlay_window/flutter_overlay_window.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart' as overlay;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
@@ -35,7 +35,7 @@ void onStart(ServiceInstance service) async {
   // 通知の初期化
   const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
   const InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings: initializationSettings);
 
   Timer.periodic(const Duration(minutes: 1), (timer) async {
     final now = DateTime.now();
@@ -99,10 +99,10 @@ Future<void> _sendNotification(String title, String body) async {
   );
   const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
   await flutterLocalNotificationsPlugin.show(
-    0,
-    title,
-    body,
-    platformChannelSpecifics,
+    id: 0,
+    title: title,
+    body: body,
+    notificationDetails: platformChannelSpecifics,
   );
 }
 
@@ -149,7 +149,7 @@ class _OverlayAppState extends State<OverlayApp> {
         if (sessionKey.isNotEmpty) {
           await prefs.setBool(sessionKey, true);
         }
-        await FlutterOverlayWindow.closeOverlay();
+        await overlay.FlutterOverlayWindow.closeOverlay();
       } else {
         setState(() => errorMsg = "サーバーエラー: ${res.statusCode}");
       }
@@ -158,7 +158,7 @@ class _OverlayAppState extends State<OverlayApp> {
       if (sessionKey.isNotEmpty) {
         await prefs.setBool(sessionKey, true);
       }
-      await FlutterOverlayWindow.closeOverlay();
+      await overlay.FlutterOverlayWindow.closeOverlay();
     } finally {
       setState(() => isLoading = false);
     }
@@ -262,9 +262,9 @@ class _MonitoringScreenState extends State<MonitoringScreen> {
 
   Future<void> _initApp() async {
     await Permission.notification.request();
-    bool overlayGranted = await FlutterOverlayWindow.isPermissionGranted();
+    bool overlayGranted = await overlay.FlutterOverlayWindow.isPermissionGranted();
     if (!overlayGranted) {
-      await FlutterOverlayWindow.requestPermission();
+      await overlay.FlutterOverlayWindow.requestPermission();
     }
     setState(() => _statusMsg = "パーミッション確認済");
 
@@ -294,16 +294,16 @@ class _MonitoringScreenState extends State<MonitoringScreen> {
   }
 
   Future<void> _showLockOverlay() async {
-    bool isActive = await FlutterOverlayWindow.isActive();
+    bool isActive = await overlay.FlutterOverlayWindow.isActive();
     if (!isActive) {
-      await FlutterOverlayWindow.showOverlay(
+      await overlay.FlutterOverlayWindow.showOverlay(
         enableDrag: false,
-        flag: OverlayFlag.focusPointer,
-        alignment: OverlayAlignment.center,
-        visibility: NotificationVisibility.visibilityPublic,
-        positionGravity: PositionGravity.auto,
-        height: WindowSize.fullCover,
-        width: WindowSize.fullCover,
+        flag: overlay.OverlayFlag.focusPointer,
+        alignment: overlay.OverlayAlignment.center,
+        visibility: overlay.NotificationVisibility.visibilityPublic,
+        positionGravity: overlay.PositionGravity.auto,
+        height: overlay.WindowSize.fullCover,
+        width: overlay.WindowSize.fullCover,
       );
     }
   }
