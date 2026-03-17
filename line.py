@@ -48,25 +48,25 @@ def send_line_push(message: str):
 def post_failure_notification(habit_id: str, failures: int, timestamp: str):
     """習慣の失敗をLINEに通知する。"""
     if habit_id == "wake":
-        habit_display = "起床(朝9時)"
-        status_msg = "🚨 二度寝してます！ 🚨"
+        habit_display = "Kishou(9AM)"
+        status_msg = "!!! Nido-ne Shitemasu !!!"
     else:
-        habit_display = "入浴(夜23時)"
-        status_msg = "🚨 まだお風呂入ってないです！ 🚨"
+        habit_display = "Nyuuyoku(11PM)"
+        status_msg = "!!! Ofuro Haitte naidesu !!!"
     
-    message = f"{status_msg}\n\n【警告】{habit_display}の目標未達です。\n"
+    message = f"{status_msg}\n\n[Warning] {habit_display} mission failed.\n"
     if failures > 1:
-        message += f"連続失敗: {failures}回目です...😱\n"
+        message += f"Consecutive failures: {failures}\n"
     
-    message += f"\n判定日時: {timestamp}"
+    message += f"\nTime: {timestamp}"
     return send_line_push(message)
 
 def post_success_notification(habit_id: str, timestamp: str):
     """習慣の達成をLINEでお祝い通知する。"""
     if habit_id == "wake":
-        status_msg = "🌞 おはようございます！起床ミッション達成！"
+        status_msg = "Good Morning! Wake up mission accomplished!"
     else:
-        status_msg = "🛁 お風呂ミッション達成！お疲れ様でした。"
+        status_msg = "Bath mission accomplished!"
     
-    message = f"{status_msg}\n\n素晴らしい継続です！✨\n完了日時: {timestamp}"
+    message = f"{status_msg}\n\nGreat job!\nTime: {timestamp}"
     return send_line_push(message)
