@@ -111,7 +111,7 @@ def checkin(payload: CheckinPayload):
     
     # DBに記録する（既に今日の記録がある場合は更新されない）
     updated = database.record_action(payload.action, timestamp)
-    
+    if updated:
         # 初回の記録成功 → 連続失敗カウントを0にリセットする
         database.update_consecutive_failures(payload.action, failed=False)
         # 達成をお祝いツイート/LINE通知する
