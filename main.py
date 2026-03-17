@@ -8,6 +8,7 @@ from datetime import datetime, date
 from apscheduler.schedulers.background import BackgroundScheduler
 import database
 import twitter
+import line
 
 # 各習慣の締め切り時刻（深夜0時からの経過分数で管理）
 # "wake"（起床） -> 09:00（540分）
@@ -50,10 +51,10 @@ def check_habits_job():
             database.update_consecutive_failures("wake", failed=True)
             stats = database.get_stats()
             # "wake" IDを渡して expressive なメッセージをトリガーする
-            success = twitter.post_failure_tweet("wake", stats["wake_consecutive_failures"], now.strftime("%Y-%m-%d %H:%M:%S"))
-            if success:
-                # ツイート済みフラグを立てて二重投稿を防ぐ
-                database.mark_tweeted("wake", today_str)
+            twitter.post_failure_tweet("wake", stats["wake_consecutive_failures"], now.strftime("%Y-%m-%d %H:%M:%S"))
+            # LINE通知を送る
+            line.post_failure_notification("wake", stats["wake_consecutive_failures"], now.strftime("%Y-%m-%d %H:%M:%S"))
+            database.mark_tweeted("wake", today_str)
                 
     # --- 入浴チェック ---
     if current_minutes >= DEADLINES["bath"]:
@@ -63,10 +64,10 @@ def check_habits_job():
             database.update_consecutive_failures("bath", failed=True)
             stats = database.get_stats()
             # "bath" IDを渡して expressive なメッセージをトリガーする
-            success = twitter.post_failure_tweet("bath", stats["bath_consecutive_failures"], now.strftime("%Y-%m-%d %H:%M:%S"))
-            if success:
-                # ツイート済みフラグを立てて二重投稿を防ぐ
-                database.mark_tweeted("bath", today_str)
+            twitter.post_failure_tweet("bath", stats["bath_consecutive_failures"], now.strftime("%Y-%m-%d %H:%M:%S"))
+            # LINE通知を送る
+            line.post_failure_notification("bath", stats["bath_consecutive_failures"], now.strftime("%Y-%m-%d %H:%M:%S"))
+            database.mark_tweeted("bath", today_str)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -111,11 +112,11 @@ def checkin(payload: CheckinPayload):
     # DBに記録する（既に今日の記録がある場合は更新されない）
     updated = database.record_action(payload.action, timestamp)
     
-    if updated:
         # 初回の記録成功 → 連続失敗カウントを0にリセットする
         database.update_consecutive_failures(payload.action, failed=False)
-        # 達成をお祝いツイートする
+        # 達成をお祝いツイート/LINE通知する
         twitter.post_success_tweet(payload.action, timestamp)
+        line.post_success_notification(payload.action, timestamp)
         return {"status": "success", "message": f"{payload.action} recorded successfully at {timestamp}."}
     else:
         # 今日はすでに記録済み → 何もしない
