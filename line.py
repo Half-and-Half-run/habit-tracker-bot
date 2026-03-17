@@ -7,14 +7,15 @@ LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 LINE_USER_ID = os.getenv("LINE_USER_ID")
 
 def send_line_push(message: str):
-    """LINE Messaging API を使って自分宛にプッシュ通知を送る。
-    
-    認証情報がない場合はドライラン（ログ出力のみ）を行う。
-    """
+    """Common LINE push notification logic."""
     if not LINE_CHANNEL_ACCESS_TOKEN or not LINE_USER_ID:
         print("--- [LINE Dry Run] ---")
-        print(f"To: {LINE_USER_ID or 'UNDEFINED'}")
-        print(f"Message: {message}")
+        print(f"To: {LINE_USER_ID if LINE_USER_ID else 'UNDEFINED'}")
+        # Use simple ASCII print for dry-run message
+        try:
+            print(f"Message: {message}")
+        except UnicodeEncodeError:
+            print(f"Message: {message.encode('ascii', errors='replace').decode('ascii')}")
         print("----------------------")
         return True
 
@@ -36,13 +37,13 @@ def send_line_push(message: str):
     try:
         response = requests.post(url, headers=headers, data=json.dumps(payload), timeout=10)
         if response.status_code == 200:
-            print("LINEプッシュ通知の送信に成功しました。")
+            print("LINE push success.")
             return True
         else:
-            print(f"LINEプッシュ通知の送信に失敗しました (Status: {response.status_code}): {response.text}")
+            print(f"LINE push failed (Status: {response.status_code})")
             return False
     except Exception as e:
-        print(f"LINEプッシュ通知送信中にエラーが発生しました: {e}")
+        print(f"LINE push error: {e}")
         return False
 
 def post_failure_notification(habit_id: str, failures: int, timestamp: str):
