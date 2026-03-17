@@ -1,5 +1,10 @@
 fastapi
 uvicorn
-tweepy
 apscheduler
+requests
 pydantic
+pydantic-settings
+python-multipart
+sqlite3
+# Tweepy is used for optional Twitter integration
+tweepy
