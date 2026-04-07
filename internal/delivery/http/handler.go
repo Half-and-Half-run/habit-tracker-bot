@@ -82,8 +82,18 @@ func (h *HabitHandler) LineCallback(c *gin.Context) {
 		lineUserID, _ := source["userId"].(string)
 
 		if lineUserID != "" {
-			userID, _ := h.usecase.RegisterUser(lineUserID)
-			fmt.Printf("User registered/detected: %d (LINE: %s)\n", userID, lineUserID[:8])
+			_, _ = h.usecase.RegisterUser(lineUserID)
+		}
+
+		eventType, _ := event["type"].(string)
+		if eventType == "message" {
+			message, _ := event["message"].(map[string]interface{})
+			text, _ := message["text"].(string)
+			replyToken, _ := event["replyToken"].(string)
+
+			if text == "status" || text == "stats" || text == "状況" {
+				_ = h.usecase.ReplyStatus(lineUserID, replyToken)
+			}
 		}
 	}
 

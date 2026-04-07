@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
+	"habit-tracker-bot/internal/domain"
 	"habit-tracker-bot/internal/infrastructure/db"
 	"habit-tracker-bot/internal/infrastructure/line"
 )
