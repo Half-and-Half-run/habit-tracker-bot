@@ -25,36 +25,28 @@ func NewLineBotService() (*LineBotService, error) {
 	return &LineBotService{client: client}, nil
 }
 
-func (s *LineBotService) SendPushMessage(to, message string) error {
+func (s *LineBotService) SendMessage(to string, messages []messaging_api.MessageInterface) error {
 	if s.client == nil {
-		fmt.Printf("--- [LINE Dry Run] ---\nTo: %s\nMessage: %s\n----------------------\n", to, message)
+		fmt.Printf("--- [LINE Dry Run] ---\nTo: %s\nMessages: %v\n----------------------\n", to, messages)
 		return nil
 	}
 
 	_, err := s.client.PushMessage(&messaging_api.PushMessageRequest{
 		To: to,
-		Messages: []messaging_api.MessageInterface{
-			&messaging_api.TextMessage{
-				Text: message,
-			},
-		},
-	}, "") // Second argument is x-line-retry-key
+		Messages: messages,
+	}, "")
 	return err
 }
 
-func (s *LineBotService) ReplyMessage(replyToken, message string) error {
+func (s *LineBotService) ReplyMessages(replyToken string, messages []messaging_api.MessageInterface) error {
 	if s.client == nil {
-		fmt.Printf("--- [LINE Dry Run Reply] ---\nToken: %s\nMessage: %s\n----------------------------\n", replyToken, message)
+		fmt.Printf("--- [LINE Dry Run Reply] ---\nToken: %s\nMessages: %v\n----------------------------\n", replyToken, messages)
 		return nil
 	}
 
 	_, err := s.client.ReplyMessage(&messaging_api.ReplyMessageRequest{
 		ReplyToken: replyToken,
-		Messages: []messaging_api.MessageInterface{
-			&messaging_api.TextMessage{
-				Text: message,
-			},
-		},
+		Messages:   messages,
 	})
 	return err
 }
