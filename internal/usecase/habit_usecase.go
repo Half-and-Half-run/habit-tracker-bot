@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
 	"habit-tracker-bot/internal/infrastructure/db"
 	"habit-tracker-bot/internal/infrastructure/line"
 )
@@ -51,7 +52,9 @@ func (u *HabitUsecase) Checkin(userID int64, action string) (string, error) {
 
 	if lineUserID != "" {
 		msg := fmt.Sprintf("%s mission accomplished!\nGreat job!\nTime: %s", action, timestamp)
-		_ = u.lineBot.SendPushMessage(lineUserID, msg)
+		_ = u.lineBot.SendMessage(lineUserID, []messaging_api.MessageInterface{
+			&messaging_api.TextMessage{Text: msg},
+		})
 	}
 
 	return "success", nil
@@ -95,9 +98,11 @@ func (u *HabitUsecase) ProcessDeadlines() {
 			if record.WakeTime == nil && record.WakeFailedTweeted == 0 {
 				_ = u.repo.UpdateConsecutiveFailures(user.ID, "wake", true)
 				stats, _ := u.repo.GetStats(user.ID)
-				msg := fmt.Sprintf("!!! Nido-ne Shitemasu !!!\n\n[Warning] Kishou mission failed.\nConsecutive failures: %d\nTime: %s", 
+				msg := fmt.Sprintf("!!! Nido-ne Shitemasu !!!\n\n[Warning] Kishou mission failed.\nConsecutive failures: %d\nTime: %s",
 					stats.WakeConsecutiveFailures, now.Format(time.RFC3339))
-				_ = u.lineBot.SendPushMessage(user.LineUserID, msg)
+				_ = u.lineBot.SendMessage(user.LineUserID, []messaging_api.MessageInterface{
+					&messaging_api.TextMessage{Text: msg},
+				})
 				_ = u.repo.MarkTweeted(user.ID, "wake", dateStr)
 			}
 		}
@@ -107,11 +112,48 @@ func (u *HabitUsecase) ProcessDeadlines() {
 			if record.BathTime == nil && record.BathFailedTweeted == 0 {
 				_ = u.repo.UpdateConsecutiveFailures(user.ID, "bath", true)
 				stats, _ := u.repo.GetStats(user.ID)
-				msg := fmt.Sprintf("!!! Ofuro Haitte naidesu !!!\n\n[Warning] Nyuuyoku mission failed.\nConsecutive failures: %d\nTime: %s", 
+				msg := fmt.Sprintf("!!! Ofuro Haitte naidesu !!!\n\n[Warning] Nyuuyoku mission failed.\nConsecutive failures: %d\nTime: %s",
 					stats.BathConsecutiveFailures, now.Format(time.RFC3339))
-				_ = u.lineBot.SendPushMessage(user.LineUserID, msg)
+				_ = u.lineBot.SendMessage(user.LineUserID, []messaging_api.MessageInterface{
+					&messaging_api.TextMessage{Text: msg},
+				})
 				_ = u.repo.MarkTweeted(user.ID, "bath", dateStr)
 			}
 		}
 	}
+}
+
+func (u *HabitUsecase) ReplyStatus(lineUserID, replyToken string) error {
+	userID, err := u.repo.GetOrRegisterUser(lineUserID)
+	if err != nil {
+		return err
+	}
+
+	status, err := u.GetStatus(userID)
+	if err != nil {
+		return err
+	}
+
+	stats := status["stats"].(*domain.UserStats)
+	record := status["today_record"].(*domain.HabitRecord)
+
+	msg := fmt.Sprintf("Current Status for User %d:\n\n", userID)
+	if record.WakeTime != nil {
+		msg += fmt.Sprintf("Wake: Success (%s)\n", *record.WakeTime)
+	} else {
+		msg += "Wake: Not Yet\n"
+	}
+
+	if record.BathTime != nil {
+		msg += fmt.Sprintf("Bath: Success (%s)\n", *record.BathTime)
+	} else {
+		msg += "Bath: Not Yet\n"
+	}
+
+	msg += fmt.Sprintf("\nConsecutive Failures:\nWake: %d\nBath: %d",
+		stats.WakeConsecutiveFailures, stats.BathConsecutiveFailures)
+
+	return u.lineBot.ReplyMessages(replyToken, []messaging_api.MessageInterface{
+		&messaging_api.TextMessage{Text: msg},
+	})
 }
