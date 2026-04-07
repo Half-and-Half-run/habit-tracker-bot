@@ -14,7 +14,6 @@ type LineBotService struct {
 func NewLineBotService() (*LineBotService, error) {
 	token := os.Getenv("LINE_CHANNEL_ACCESS_TOKEN")
 	if token == "" {
-		// Allows dry-run if token is missing
 		return &LineBotService{client: nil}, nil
 	}
 
@@ -39,7 +38,7 @@ func (s *LineBotService) SendPushMessage(to, message string) error {
 				Text: message,
 			},
 		},
-	})
+	}, "") // Second argument is x-line-retry-key
 	return err
 }
 
