@@ -1,12 +1,9 @@
 use std::time::Duration;
 use tokio::time::sleep;
 use serde::Deserialize;
-use tokio::time::sleep;
-use serde::Deserialize;
 use anyhow::Result;
 use chrono::Timelike;
 use std::sync::atomic::{AtomicBool, Ordering};
-use windows::core::PCSTR;
 
 #[derive(Debug, Deserialize)]
 struct HabitStatus {
@@ -62,10 +59,6 @@ mod windows_lock {
                 let hdc = BeginPaint(hwnd, &mut ps);
                 let mut rect = RECT::default();
                 GetClientRect(hwnd, &mut rect);
-                
-                // Semi-transparent black background (Layered window handles this via Alpha)
-                // For GDI, we just fill if we aren't using transparency.
-                // But WS_EX_LAYERED + SetLayeredWindowAttributes is easier.
                 
                 SetBkMode(hdc, TRANSPARENT);
                 SetTextColor(hdc, COLORREF(0x0000FF)); // Red text
