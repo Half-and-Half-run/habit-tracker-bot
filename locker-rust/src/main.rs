@@ -65,9 +65,15 @@ mod windows_lock {
                 SetTextColor(hdc, COLORREF(0x0000FF)); // Red text
                 
                 let text = b"HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0";
-                // In windows-rs 0.48, DrawTextA is in Graphics::Gdi. 
-                // DT constants are also in Graphics::Gdi.
-                DrawTextA(hdc, PCSTR(text.as_ptr()), -1_i32, &mut rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+                // Enums in windows-rs usually have a .0 field for bitwise operations.
+                // DrawTextA expects DRAW_TEXT_FORMAT for the flags and i32 for the length.
+                DrawTextA(
+                    hdc, 
+                    PCSTR(text.as_ptr()), 
+                    -1_i32, 
+                    &mut rect, 
+                    DRAW_TEXT_FORMAT(DT_CENTER.0 | DT_VCENTER.0 | DT_SINGLELINE.0)
+                );
                 
                 EndPaint(hwnd, &ps);
                 LRESULT(0)
