@@ -49,7 +49,7 @@ mod windows_lock {
     use windows::Win32::UI::WindowsAndMessaging::*;
     use windows::Win32::Foundation::*;
     use windows::Win32::Graphics::Gdi::*;
-    use windows::core::PCSTR;
+    use windows::core::s;
     use std::sync::atomic::Ordering;
     use super::SHOULD_LOCK;
 
@@ -64,18 +64,14 @@ mod windows_lock {
                 SetBkMode(hdc, TRANSPARENT);
                 SetTextColor(hdc, COLORREF(0x0000FF)); // Red text
                 
-                let text = b"HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0";
-                
-                // Use explicit raw values for DT constants if bitwise OR causes type mismatch.
+                // Use s! macro for PCSTR in windows-rs
                 // DT_CENTER (1) | DT_VCENTER (4) | DT_SINGLELINE (32) = 37
-                let format = DRAW_TEXT_FORMAT(37);
-                
                 DrawTextA(
                     hdc, 
-                    PCSTR(text.as_ptr()), 
+                    s!("HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT"), 
                     -1_i32, 
                     &mut rect, 
-                    format
+                    DRAW_TEXT_FORMAT(37)
                 );
                 
                 EndPaint(hwnd, &ps);
