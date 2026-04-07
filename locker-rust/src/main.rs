@@ -63,13 +63,12 @@ mod windows_lock {
                 SetBkMode(hdc, TRANSPARENT);
                 SetTextColor(hdc, COLORREF(0x0000FF)); // Red text
                 
+                // In this windows-rs version, it seems DrawTextA takes 4 arguments and uses an immutable &[u8] slice.
                 let text = b"HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0";
                 
-                // Use standard WinAPI 5-argument style with explicit PCSTR.
                 DrawTextA(
                     hdc, 
-                    PCSTR(text.as_ptr()),
-                    -1_i32,
+                    &text[..],
                     &mut rect, 
                     DRAW_TEXT_FORMAT(37) // DT_CENTER | DT_VCENTER | DT_SINGLELINE
                 );
