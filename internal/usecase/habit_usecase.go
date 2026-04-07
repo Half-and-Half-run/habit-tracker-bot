@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"habit-tracker-bot/internal/domain"
 	"habit-tracker-bot/internal/infrastructure/db"
 	"habit-tracker-bot/internal/infrastructure/line"
 )
@@ -40,7 +39,6 @@ func (u *HabitUsecase) Checkin(userID int64, action string) (string, error) {
 	_ = u.repo.UpdateConsecutiveFailures(userID, action, false)
 
 	// Send success notification via LINE
-	user, _ := u.repo.GetOrRegisterUser("") // This is just a placeholder to get LINE ID if needed
 	// Actually, we need to get the lineUserID for the given userID
 	users, _ := u.repo.GetAllUsers()
 	var lineUserID string
@@ -81,7 +79,7 @@ func (u *HabitUsecase) GetStatus(userID int64) (map[string]interface{}, error) {
 func (u *HabitUsecase) ProcessDeadlines() {
 	now := time.Now()
 	dateStr := now.Format("2006-01-02")
-	currentMinutes := now.Hour()*60 + now.Minute
+	currentMinutes := now.Hour()*60 + now.Minute()
 
 	users, err := u.repo.GetAllUsers()
 	if err != nil {
