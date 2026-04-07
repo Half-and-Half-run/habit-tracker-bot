@@ -5,6 +5,7 @@ use anyhow::{Result, Context};
 use chrono::Timelike;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use windows::core::PCSTR;
 
 #[derive(Debug, Deserialize)]
 struct HabitStatus {
@@ -69,7 +70,7 @@ mod windows_lock {
                 SetTextColor(hdc, COLORREF(0x0000FF)); // Red text
                 
                 let text = "HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0";
-                DrawTextA(hdc, text.as_ptr(), -1, &mut rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+                DrawTextA(hdc, windows::core::PCSTR(text.as_ptr()), -1, &mut rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
                 
                 EndPaint(hwnd, &ps);
                 LRESULT(0)
