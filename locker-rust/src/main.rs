@@ -66,9 +66,9 @@ mod windows_lock {
                 
                 let text = b"HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0";
                 
-                // Explicitly use u32 values and cast to DRAW_TEXT_FORMAT to avoid scope issues in 0.48
-                // DT_CENTER=1, DT_VCENTER=4, DT_SINGLELINE=32
-                let format = DRAW_TEXT_FORMAT(DT_CENTER.0 | DT_VCENTER.0 | DT_SINGLELINE.0);
+                // Use explicit raw values for DT constants if bitwise OR causes type mismatch.
+                // DT_CENTER (1) | DT_VCENTER (4) | DT_SINGLELINE (32) = 37
+                let format = DRAW_TEXT_FORMAT(37);
                 
                 DrawTextA(
                     hdc, 
