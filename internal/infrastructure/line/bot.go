@@ -1,6 +1,7 @@
 package line
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -32,9 +33,9 @@ func (s *LineBotService) SendMessage(to string, messages []messaging_api.Message
 	}
 
 	_, err := s.client.PushMessage(&messaging_api.PushMessageRequest{
-		To: to,
+		To:       to,
 		Messages: messages,
-	}, "")
+	}, "") // x-line-retry-key
 	return err
 }
 
