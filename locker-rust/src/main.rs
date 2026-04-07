@@ -63,12 +63,12 @@ mod windows_lock {
                 SetBkMode(hdc, TRANSPARENT);
                 SetTextColor(hdc, COLORREF(0x0000FF)); // Red text
                 
-                // DrawTextA expects &mut [u8]. Explicitly provide the mutable slice of an owned buffer.
-                let mut text = b"HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0".to_owned();
+                // In this windows-rs version, it seems DrawTextA definitively wants &[u8].
+                let text = b"HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0";
                 
                 DrawTextA(
                     hdc, 
-                    &mut text[..],
+                    text,
                     &mut rect, 
                     DRAW_TEXT_FORMAT(37) // DT_CENTER | DT_VCENTER | DT_SINGLELINE
                 );
