@@ -65,14 +65,17 @@ mod windows_lock {
                 SetTextColor(hdc, COLORREF(0x0000FF)); // Red text
                 
                 let text = b"HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0";
-                // Enums in windows-rs usually have a .0 field for bitwise operations.
-                // DrawTextA expects DRAW_TEXT_FORMAT for the flags and i32 for the length.
+                
+                // Explicitly use u32 values and cast to DRAW_TEXT_FORMAT to avoid scope issues in 0.48
+                // DT_CENTER=1, DT_VCENTER=4, DT_SINGLELINE=32
+                let format = DRAW_TEXT_FORMAT(DT_CENTER.0 | DT_VCENTER.0 | DT_SINGLELINE.0);
+                
                 DrawTextA(
                     hdc, 
                     PCSTR(text.as_ptr()), 
                     -1_i32, 
                     &mut rect, 
-                    DRAW_TEXT_FORMAT(DT_CENTER | DT_VCENTER | DT_SINGLELINE)
+                    format
                 );
                 
                 EndPaint(hwnd, &ps);
