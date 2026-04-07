@@ -2,45 +2,44 @@
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-/lib/
-/lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual environments
+.venv/
 venv/
+ENV/
+env/
 .env
 
-# Database
-data/
-*.db
-*.sqlite3
+# Go
+server
+server.exe
+go.sum
 
-# Flutter/Dart/Android/iOS built application files
-**/.dart_tool/
-**/.packages
-**/build/
-**/.flutter-plugins
-**/.flutter-plugins-dependencies
+# Rust
+target/
+**/*.rs.bk
+build_errors.txt
 
-# Mac / Windows OS files
-.DS_Store
-Thumbs.db
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+**/*.fdb
+**/*.bak
+**/*.exe
+**/*.dll
+**/*.pdb
+
+# SQLite
+data/*.db
+data/*.db-journal
 
 # IDEs
-.idea/
 .vscode/
+.idea/
 *.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

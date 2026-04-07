@@ -68,8 +68,8 @@ mod windows_lock {
                 SetBkMode(hdc, TRANSPARENT);
                 SetTextColor(hdc, COLORREF(0x0000FF)); // Red text
                 
-                let text = "HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT";
-                DrawTextA(hdc, text.as_ptr(), text.len() as i32, &mut rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+                let text = "HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0";
+                DrawTextA(hdc, text.as_ptr(), -1, &mut rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
                 
                 EndPaint(hwnd, &ps);
                 LRESULT(0)
