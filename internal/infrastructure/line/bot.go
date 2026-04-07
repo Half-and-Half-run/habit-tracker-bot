@@ -1,7 +1,6 @@
 package line
 
 import (
-	"context"
 	"fmt"
 	"os"
 
