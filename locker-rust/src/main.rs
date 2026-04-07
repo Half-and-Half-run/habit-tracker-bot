@@ -49,7 +49,7 @@ mod windows_lock {
     use windows::Win32::UI::WindowsAndMessaging::*;
     use windows::Win32::Foundation::*;
     use windows::Win32::Graphics::Gdi::*;
-    use windows::core::s;
+    use windows::core::PCSTR;
     use std::sync::atomic::Ordering;
     use super::SHOULD_LOCK;
 
@@ -64,11 +64,13 @@ mod windows_lock {
                 SetBkMode(hdc, TRANSPARENT);
                 SetTextColor(hdc, COLORREF(0x0000FF)); // Red text
                 
-                // Use s! macro for PCSTR in windows-rs
-                // DT_CENTER (1) | DT_VCENTER (4) | DT_SINGLELINE (32) = 37
+                let text = b"HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0";
+                
+                // Explicitly use PCSTR wrapper around a null-terminated byte slice.
+                // 37 is the combined flag for DT_CENTER | DT_VCENTER | DT_SINGLELINE
                 DrawTextA(
                     hdc, 
-                    s!("HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT"), 
+                    PCSTR(text.as_ptr()), 
                     -1_i32, 
                     &mut rect, 
                     DRAW_TEXT_FORMAT(37)
@@ -103,7 +105,7 @@ mod windows_lock {
             let screen_height = GetSystemMetrics(SM_CYSCREEN);
 
             let hwnd = CreateWindowExW(
-                WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT,
+               WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT,
                 class_name,
                 windows::core::w!("Locker"),
                 WS_POPUP,
