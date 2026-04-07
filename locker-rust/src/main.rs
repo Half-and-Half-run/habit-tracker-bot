@@ -72,7 +72,7 @@ mod windows_lock {
                     PCSTR(text.as_ptr()), 
                     -1_i32, 
                     &mut rect, 
-                    DRAW_TEXT_FORMAT(DT_CENTER.0 | DT_VCENTER.0 | DT_SINGLELINE.0)
+                    DRAW_TEXT_FORMAT(DT_CENTER | DT_VCENTER | DT_SINGLELINE)
                 );
                 
                 EndPaint(hwnd, &ps);
