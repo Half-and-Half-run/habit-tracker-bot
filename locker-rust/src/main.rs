@@ -63,16 +63,14 @@ mod windows_lock {
                 SetBkMode(hdc, TRANSPARENT);
                 SetTextColor(hdc, COLORREF(0x0000FF)); // Red text
                 
-                let text = b"HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0";
+                // In this windows-rs version, DrawTextA takes a &mut [u8] slice.
+                let mut text = b"HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0".to_vec();
                 
-                // Use PCSTR from Foundation if not in core. 
-                // Using full path to avoid ambiguity.
                 DrawTextA(
                     hdc, 
-                    windows::Win32::Foundation::PCSTR(text.as_ptr()), 
-                    -1_i32, 
+                    &mut text, 
                     &mut rect, 
-                    DRAW_TEXT_FORMAT(37)
+                    DRAW_TEXT_FORMAT(37) // DT_CENTER | DT_VCENTER | DT_SINGLELINE
                 );
                 
                 EndPaint(hwnd, &ps);
