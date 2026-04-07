@@ -1,10 +1,11 @@
 use std::time::Duration;
 use tokio::time::sleep;
 use serde::Deserialize;
-use anyhow::{Result, Context};
+use tokio::time::sleep;
+use serde::Deserialize;
+use anyhow::Result;
 use chrono::Timelike;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
 use windows::core::PCSTR;
 
 #[derive(Debug, Deserialize)]
@@ -69,8 +70,8 @@ mod windows_lock {
                 SetBkMode(hdc, TRANSPARENT);
                 SetTextColor(hdc, COLORREF(0x0000FF)); // Red text
                 
-                let text = "HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0";
-                DrawTextA(hdc, windows::core::PCSTR(text.as_ptr()), -1, &mut rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+                let mut text = "HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT".as_bytes().to_vec();
+                DrawTextA(hdc, &mut text, &mut rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
                 
                 EndPaint(hwnd, &ps);
                 LRESULT(0)
