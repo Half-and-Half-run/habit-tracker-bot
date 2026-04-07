@@ -63,11 +63,11 @@ mod windows_lock {
                 SetBkMode(hdc, TRANSPARENT);
                 SetTextColor(hdc, COLORREF(0x0000FF)); // Red text
                 
-                // Ensure text is an owned mutable buffer.
-                let mut text_vec = b"HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0".to_vec();
-                let text_slice: &mut [u8] = &mut text_vec[..];
+                // DrawTextA expects an immutable slice &[u8]. 
+                // Explicitly slicing the byte array literal.
+                let text = b"HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0";
+                let text_slice: &[u8] = &text[..];
                 
-                // DrawTextA in windows-rs 0.48 (Graphics::Gdi) takes 4 arguments.
                 DrawTextA(
                     hdc, 
                     text_slice,
