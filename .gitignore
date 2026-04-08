@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+<<<<<<< HEAD
 .venv/
 venv/
 ENV/
@@ -60,3 +61,47 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 desktop.ini
+=======
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+/lib/
+/lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+.env
+
+# Database
+data/
+*.db
+*.sqlite3
+
+# Flutter/Dart/Android/iOS built application files
+**/.dart_tool/
+**/.packages
+**/build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+
+# Mac / Windows OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+>>>>>>> a091bffe42e9b6e35e0c75fe6ac57d6cdbf61e4d
