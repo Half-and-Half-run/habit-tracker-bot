@@ -49,6 +49,7 @@ mod windows_lock {
     use windows::Win32::UI::WindowsAndMessaging::*;
     use windows::Win32::Foundation::*;
     use windows::Win32::Graphics::Gdi::*;
+    use windows::Win32::System::LibraryLoader::*;
     use std::sync::atomic::Ordering;
     use super::SHOULD_LOCK;
 
