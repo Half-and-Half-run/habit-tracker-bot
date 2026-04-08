@@ -63,13 +63,12 @@ mod windows_lock {
                 SetBkMode(hdc, TRANSPARENT);
                 SetTextColor(hdc, COLORREF(0x0000FF)); // Red text
                 
-                // In some windows-rs versions, DrawTextW takes a &mut [u16] slice.
-                // Encode UTF-16 and collect into a mutable Vec.
-                let mut text: Vec<u16> = "HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0".encode_utf16().collect();
+                // DrawTextW expects an immutable slice &[u16].
+                let text: Vec<u16> = "HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0".encode_utf16().collect();
                 
                 DrawTextW(
                     hdc, 
-                    &mut text,
+                    &text, // pass as immutable slice
                     &mut rect, 
                     DRAW_TEXT_FORMAT(37) // DT_CENTER | DT_VCENTER | DT_SINGLELINE
                 );
