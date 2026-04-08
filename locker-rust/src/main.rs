@@ -60,18 +60,18 @@ mod windows_lock {
                 let mut rect = RECT::default();
                 GetClientRect(hwnd, &mut rect);
                 
-                SetBkMode(hdc, TRANSPARENT);
-                SetTextColor(hdc, COLORREF(0x0000FF)); // Red text
+                // Use windows-sys for stable raw Win32 call.
+                let text: Vec<u16> = "HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0".encode_utf16().collect();
                 
-                // Final attempt at DrawTextW: Use explicit mutable slice of Vec<u16>.
-                let mut text: Vec<u16> = "HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0".encode_utf16().collect();
-                
-                DrawTextW(
-                    hdc, 
-                    &mut text[..], // Use explicit mutable slice
-                    &mut rect, 
-                    DRAW_TEXT_FORMAT(37) // DT_CENTER | DT_VCENTER | DT_SINGLELINE
-                );
+                unsafe {
+                    windows_sys::Win32::Graphics::Gdi::DrawTextW(
+                        hdc.0 as _, 
+                        text.as_ptr(),
+                        -1,
+                        &mut rect as *mut _ as *mut _,
+                        37 // DT_CENTER | DT_VCENTER | DT_SINGLELINE
+                    );
+                }
                 
                 EndPaint(hwnd, &ps);
                 LRESULT(0)
