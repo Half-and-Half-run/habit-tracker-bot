@@ -49,6 +49,7 @@ mod windows_lock {
     use windows::Win32::UI::WindowsAndMessaging::*;
     use windows::Win32::Foundation::*;
     use windows::Win32::Graphics::Gdi::*;
+    use windows::core::PCWSTR;
     use std::sync::atomic::Ordering;
     use super::SHOULD_LOCK;
 
@@ -63,12 +64,13 @@ mod windows_lock {
                 SetBkMode(hdc, TRANSPARENT);
                 SetTextColor(hdc, COLORREF(0x0000FF)); // Red text
                 
-                // DrawTextW expects an immutable slice &[u16].
+                // DrawTextW using explicit PCWSTR pointer and 5 arguments.
                 let text: Vec<u16> = "HABIT MISSION NOT ACCOMPLISHED\nPLEASE CHECK IN VIA LINE BOT\0".encode_utf16().collect();
                 
                 DrawTextW(
                     hdc, 
-                    &text, // pass as immutable slice
+                    PCWSTR(text.as_ptr()),
+                    -1_i32,
                     &mut rect, 
                     DRAW_TEXT_FORMAT(37) // DT_CENTER | DT_VCENTER | DT_SINGLELINE
                 );
