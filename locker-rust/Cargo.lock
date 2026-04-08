@@ -568,6 +568,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "windows",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
