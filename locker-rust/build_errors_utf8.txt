@@ -1,0 +1,39 @@
+﻿cargo :    Compiling locke
+r-rust v0.1.0 (C:\Projects
+\testtracker\habit-tracker
+-bot\locker-rust)
+発生場所 行:1 文字:1
++ cargo build --bin locker
+-rust 2> build_errors.txt;
+ cat build_errors.t ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (   
+    Compiling lo...ot\l   
+ ocker-rust):String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+error[E0432]: unresolved i
+mport `windows::Win32::Sys
+tem::LibraryLoader`
+  --> src\main.rs:52:33
+   |
+52 |     use windows::Win3
+2::System::LibraryLoader::
+*;
+   |                      
+           ^^^^^^^^^^^^^ c
+ould not find `LibraryLoad
+er` in `System`
+
+For more information about
+ this error, try `rustc --
+explain E0432`.
+error: could not compile `
+locker-rust` (bin "locker-
+rust") due to 1 previous e
+rror
